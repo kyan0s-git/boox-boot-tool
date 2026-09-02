@@ -1,0 +1,89 @@
+# BOOX Go Color 7 (Gen II)
+#
+# `verified = false` is deliberate and is not a guess about the values below --
+# it means nobody has yet run the hardware checklist in SAFETY.md against a real
+# unit with this file. Writes are authorised by preflight measuring the device
+# in front of it, not by this flag; the flag only controls how loudly the tool
+# warns. Flip it to true once you have completed the checklist, and record the
+# HWID you observed in expected_hwids so future runs can catch a mismatch.
+
+[device]
+id = "gocolor7_2"
+name = "BOOX Go Color 7 (Gen II)"
+verified = false
+adb_models = [
+    "Go Color 7 Gen II",
+    "GoColor7_2",
+    "Go_Color7_2",
+]
+notes = """
+Android 13. Onyx's fastboot implementation is broken on this device -- `fastboot
+flash` answers "unknown command" and `fastboot oem unlock` reports OKAY while
+leaving the bootloader locked -- so EDL is the only usable write channel.
+"""
+
+[soc]
+name = "Qualcomm (bitra-class, SM7225 / Snapdragon 750G family)"
+memory = "emmc"
+# Left empty on purpose: the SoC identity above is inferred from the community's
+# use of a FairPhone 4 (SM7225) bootloader on this device, not confirmed by us.
+# Preflight reads the real HWID off the device and records it; fill this in from
+# that observed value rather than from anything written here.
+expected_hwids = []
+
+[firmware]
+onyx_model = "GoColor7_2"
+
+# Loader candidates, tried in order. Preflight confirms a loader actually works
+# by completing a Firehose handshake -- a name matching here proves nothing.
+[[loader.candidates]]
+name = "0000000000000000_bdaf51b59ba21d8a_fhprg.bin"
+url = "https://github.com/bkerler/Loaders/raw/refs/heads/main/lenovo_motorola/0000000000000000_bdaf51b59ba21d8a_fhprg.bin"
+notes = "Reported working on Boox Go 7 Gen II, Palma 2 and Note Air 4C."
+
+[[loader.candidates]]
+name = "SM_BITRA"
+notes = "Reported working on the B&W Go 7 Gen II when the loader above could not read boot."
+
+[partitions]
+# Magisk patches whichever of these actually carries the ramdisk. The tool picks
+# by inspecting the device's real partition table and image contents, in this
+# order of preference.
+root_targets = ["init_boot", "boot"]
+
+# Rewritten with its own bytes during preflight to prove the write path works
+# while the device is still healthy. Small, and holds no boot code.
+roundtrip_partition = "misc"
+
+backup_set = [
+    "boot_a", "boot_b",
+    "init_boot_a", "init_boot_b",
+    "vendor_boot_a", "vendor_boot_b",
+    "recovery_a", "recovery_b",
+    "vbmeta_a", "vbmeta_b",
+    "vbmeta_system_a", "vbmeta_system_b",
+    "dtbo_a", "dtbo_b",
+    "abl_a", "abl_b",
+    "xbl_a", "xbl_b",
+    "xbl_config_a", "xbl_config_b",
+    "tz_a", "tz_b",
+    "hyp_a", "hyp_b",
+    "devcfg_a", "devcfg_b",
+    "misc",
+    "frp",
+    "devinfo",
+    "persist",
+    "modemst1",
+    "modemst2",
+    "fsg",
+]
+
+[quirks]
+# `fastboot flash` returns "unknown command" past roughly firmware 3.52.
+fastboot_broken = true
+# The Magisk app hangs on its splash screen because of Onyx's modified
+# services.jar; root itself works. See `boox harden --ams-fix`.
+magisk_splash_hang = true
+# Incremental OTAs refuse to install on a rooted device; full OTAs install fine
+# and simply remove root.
+incremental_ota_blocked_by_root = true

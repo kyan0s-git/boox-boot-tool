@@ -1,0 +1,38 @@
+# Template for contributing a new Boox device profile.
+#
+# Copy to <device_id>.toml and fill in. Leave `verified = false` until you have
+# personally completed the hardware checklist in SAFETY.md on that device.
+# Do not copy values across models on the assumption that similar devices match:
+# every wrong value here is a potential brick for whoever uses your profile.
+
+[device]
+id = "example_device"
+name = "BOOX Example"
+verified = false
+adb_models = ["Example"]        # exact ro.product.model values
+notes = ""
+
+[soc]
+name = "unknown"
+memory = "emmc"                 # "emmc" or "ufs" -- wrong value makes EDL read garbage
+expected_hwids = []             # fill from what preflight reports on real hardware
+
+[firmware]
+onyx_model = ""                 # the model column in BooxKeys.csv, if present
+
+[[loader.candidates]]
+name = ""
+url = ""
+notes = ""
+
+[partitions]
+root_targets = ["init_boot", "boot"]
+roundtrip_partition = "misc"    # must also be in backup_set
+backup_set = ["boot_a", "boot_b", "misc"]
+
+# Optional. May only raise a partition's danger tier, never lower it.
+[partitions.tier_overrides]
+# some_partition = "CATASTROPHIC"
+
+[quirks]
+fastboot_broken = false

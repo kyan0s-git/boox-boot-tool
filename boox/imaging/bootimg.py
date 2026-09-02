@@ -145,7 +145,7 @@ def _check_span(data: bytes, name: str, offset: int, size: int) -> Section:
     return Section(name, offset, size)
 
 
-def _parse_boot_v0_v2(data: bytes) -> BootImage:
+def _parse_boot_v0_v2(data: bytes, allow_empty_kernel: bool = False) -> BootImage:
     if len(data) < 1648:
         raise ImageError(f"boot image too small for a v0-v2 header ({len(data)} bytes)")
     (
@@ -193,10 +193,13 @@ def _parse_boot_v0_v2(data: bytes) -> BootImage:
             sections[name] = _check_span(data, name, offset, size)
         offset += _align(size, page_size)
 
-    if kernel_size == 0:
+    if kernel_size == 0 and not allow_empty_kernel:
         raise ImageError(
             "boot image declares a zero-length kernel",
-            remedy="A boot partition with no kernel will not boot. Refusing to treat this as valid.",
+            remedy=(
+                "A boot partition with no kernel will not boot. This is only valid for "
+                "init_boot, which is ramdisk-only."
+            ),
         )
 
     return BootImage(
@@ -210,7 +213,7 @@ def _parse_boot_v0_v2(data: bytes) -> BootImage:
     )
 
 
-def _parse_boot_v3_v4(data: bytes) -> BootImage:
+def _parse_boot_v3_v4(data: bytes, allow_empty_kernel: bool = False) -> BootImage:
     if len(data) < 1584:
         raise ImageError(f"boot image too small for a v3/v4 header ({len(data)} bytes)")
     kernel_size, ramdisk_size, os_version, _header_size = struct.unpack_from("<4I", data, 8)
@@ -236,10 +239,13 @@ def _parse_boot_v3_v4(data: bytes) -> BootImage:
         if offset + signature_size <= len(data):
             sections["boot_signature"] = Section("boot_signature", offset, signature_size)
 
-    if kernel_size == 0:
+    if kernel_size == 0 and not allow_empty_kernel:
         raise ImageError(
             "boot image declares a zero-length kernel",
-            remedy="A boot partition with no kernel will not boot. Refusing to treat this as valid.",
+            remedy=(
+                "A boot partition with no kernel will not boot. This is only valid for "
+                "init_boot, which is ramdisk-only."
+            ),
         )
 
     return BootImage(
@@ -291,8 +297,13 @@ def _parse_vendor_boot(data: bytes) -> BootImage:
     )
 
 
-def parse(data: bytes) -> BootImage:
-    """Parse a boot-family image. Raises ``ImageError`` if it is not one."""
+def parse(data: bytes, *, allow_empty_kernel: bool = False) -> BootImage:
+    """Parse a boot-family image. Raises ``ImageError`` if it is not one.
+
+    ``allow_empty_kernel`` must be set for ``init_boot``, which carries only a
+    ramdisk. For a real ``boot`` partition it must stay False: an image with no
+    kernel there would leave the device unbootable.
+    """
     kind = detect_kind(data)
     if kind == "vendor_boot":
         return _parse_vendor_boot(data)
@@ -305,13 +316,13 @@ def parse(data: bytes) -> BootImage:
     # and let the value decide which layout applies.
     v012 = struct.unpack_from("<I", data, 40)[0] if len(data) >= 44 else 0
     if v012 in (3, 4):
-        return _parse_boot_v3_v4(data)
+        return _parse_boot_v3_v4(data, allow_empty_kernel)
     if v012 > MAX_HEADER_VERSION:
         raise ImageError(
             f"unsupported boot header version {v012}",
             remedy="This tool understands boot image versions 0 through 4.",
         )
-    return _parse_boot_v0_v2(data)
+    return _parse_boot_v0_v2(data, allow_empty_kernel)
 
 
 def has_avb_footer(data: bytes) -> bool:
