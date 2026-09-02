@@ -1,0 +1,50 @@
+# Tier: safe
+# Removed with `pm uninstall --user 0`, which hides the package from the current
+# user and is reversible with `cmd package install-existing`. Nothing here is
+# needed to boot, read, write, or configure the device.
+
+# Printing and casting -- an e-reader does neither
+com.android.bips
+com.android.printservice.recommendation
+
+# Telephony leftovers on a device with no cellular radio
+com.android.smspush
+com.android.providers.blockednumber
+com.qualcomm.embms
+com.qualcomm.qti.uim
+com.qualcomm.qti.uimGbaApp
+
+# Display cutout / navbar overlays for phone form factors
+com.android.internal.display.cutout.emulation.corner
+com.android.internal.display.cutout.emulation.double
+com.android.internal.display.cutout.emulation.hole
+com.android.internal.display.cutout.emulation.tall
+com.android.internal.display.cutout.emulation.waterfall
+com.android.internal.systemui.navbar.gestural
+com.android.internal.systemui.navbar.gestural_extra_wide_back
+com.android.internal.systemui.navbar.gestural_narrow_back
+com.android.internal.systemui.navbar.gestural_wide_back
+com.android.internal.systemui.navbar.threebutton
+
+# Misc platform extras
+com.android.bluetoothmidiservice
+com.android.cameraextensions
+com.android.cts.ctsshim
+com.android.dreams.phototable
+com.android.emergency
+com.android.theme.font.notoserifsource
+com.android.quicksearchbox
+com.qualcomm.qti.seccamservice
+com.qualcomm.qti.services.systemhelper
+com.qualcomm.qti.xrcb
+com.qualcomm.qti.xrvd.service
+com.qualcomm.qtil.aptxui
+
+# Onyx accessories most people replace with their own apps
+com.onyx.calculator
+com.onyx.clock
+com.onyx.gallery
+com.onyx.musicplayer
+com.onyx.voicerecorder
+com.onyx.mail
+com.onyx.android.production.test

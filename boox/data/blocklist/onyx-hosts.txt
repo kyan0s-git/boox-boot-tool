@@ -1,0 +1,26 @@
+# Onyx / Boox telemetry and cloud endpoints.
+#
+# Sources: JordanEJ/Onyx-Boox-Blocklist and community traffic analysis.
+# Blocking these disables Boox account sync, the app store, OTA firmware checks
+# and the AI assistant. That is the intended effect; it is not a bug.
+#
+# Note: the "cloud index" bootstrap is reached by hardcoded IP over plain HTTP
+# and sends the device MAC address. A hosts file cannot block an IP literal --
+# use a firewall rule for 119.23.143.188 as well. `boox harden` says so too.
+
+boox.com
+data.boox.com
+log.boox.com
+push.boox.com
+en-data.boox.com
+en-lon.boox.com
+cb.boox.com
+eur.boox.com
+eurcb.boox.com
+send2boox.com
+cb.send2boox.com
+onyx-international.cn
+en-data.onyx-international.cn
+onyx-avatar-us.oss-us-west-1.aliyuncs.com
+onyx.edu.oss-cn-shenzhen.aliyuncs.com
+cn.pool.ntp.org

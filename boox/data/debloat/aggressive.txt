@@ -1,0 +1,33 @@
+# Tier: aggressive
+# These are the packages that talk to Onyx and Google. Removing them is the
+# point of debloating, but each one takes a feature with it, so they are listed
+# separately from the safe tier and each says what you lose.
+
+# Onyx cloud, AI and store. These are the main sources of traffic to Onyx's
+# servers. Losing them loses cloud sync, the AI assistant, and OTA app installs.
+com.onyx.aiassistant
+com.onyx.appmarket
+com.onyx.easytransfer
+com.onyx.igetshop
+
+# Onyx input methods and dictionary. Only remove these if you have installed a
+# replacement keyboard first -- otherwise you will have no way to type.
+com.onyx.kime
+com.onyx.latinime
+com.onyx.dict
+
+# Google. Removing the Play Store leaves sideloading (adb install) as the only
+# way to add apps.
+com.android.vending
+com.google.android.apps.restore
+com.google.android.gms.location.history
+com.google.android.overlay.gmsconfig.common
+com.google.android.syncadapters.calendar
+com.google.android.syncadapters.contacts
+
+# Contacts provider -- nothing on an e-reader needs it, but a few third-party
+# apps will refuse to start without it.
+com.android.providers.contacts
+
+# Bundled Chromium. Removing it breaks in-app web views for some apps.
+org.chromium.chrome

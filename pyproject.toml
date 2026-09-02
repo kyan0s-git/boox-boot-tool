@@ -25,7 +25,7 @@ boox = "boox.cli:main"
 include = ["boox*"]
 
 [tool.setuptools.package-data]
-boox = ["profiles/*.toml"]
+boox = ["profiles/*.toml", "data/debloat/*.txt", "data/blocklist/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

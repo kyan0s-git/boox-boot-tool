@@ -85,9 +85,26 @@ class Report:
     def add(self, name: str, passed: bool, detail: str, *, fatal: bool = True) -> None:
         self.checks.append(Check(name, passed, detail, fatal))
 
+    overrides: dict[str, str] = field(default_factory=dict)
+
+    def override(self, name: str, reason: str) -> None:
+        """Acknowledge one failing check by name, recording why.
+
+        This exists for exactly one situation: deliberately writing a
+        bootloader that by definition cannot match any reference for this
+        device. It is narrow on purpose -- it takes a single check name, and
+        the reason is written into the journal alongside the write.
+        """
+        if not any(c.name == name for c in self.checks):
+            raise VerificationError(f"cannot override {name!r}: no such check in this report")
+        self.overrides[name] = reason
+
     @property
     def failures(self) -> list[Check]:
-        return [c for c in self.checks if not c.passed and c.fatal]
+        return [
+            c for c in self.checks
+            if not c.passed and c.fatal and c.name not in self.overrides
+        ]
 
     @property
     def warnings(self) -> list[Check]:
@@ -108,7 +125,13 @@ class Report:
         )
 
     def render(self) -> str:
-        return "\n".join(f"  [{c.symbol:>4}] {c.name}: {c.detail}" for c in self.checks)
+        lines = []
+        for c in self.checks:
+            symbol = "ackd" if (not c.passed and c.name in self.overrides) else c.symbol
+            lines.append(f"  [{symbol:>4}] {c.name}: {c.detail}")
+            if c.name in self.overrides:
+                lines.append(f"         acknowledged: {self.overrides[c.name]}")
+        return "\n".join(lines)
 
 
 def _parse_boot(data: bytes, allow_empty_kernel: bool) -> bootimg.BootImage | None:

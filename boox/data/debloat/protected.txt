@@ -1,0 +1,37 @@
+# Packages this tool will never disable, whatever list asks for them.
+# Removing any of these leaves the device unusable or unconfigurable.
+
+# Onyx's launcher is also the settings surface. Without it there is no UI.
+com.onyx
+com.onyx.android.launcher
+
+# Android core
+android
+com.android.settings
+com.android.systemui
+com.android.providers.settings
+com.android.shell
+com.android.permissioncontroller
+com.google.android.permissioncontroller
+com.android.packageinstaller
+com.google.android.packageinstaller
+com.android.certinstaller
+com.android.keychain
+com.android.inputdevices
+com.android.location.fused
+com.android.se
+com.android.server.telecom
+com.android.wifi.resources
+com.android.providers.media
+com.android.providers.media.module
+com.android.providers.downloads
+com.android.externalstorage
+com.android.documentsui
+com.android.storagemanager
+
+# Qualcomm platform services the device needs to boot and use radios
+com.qualcomm.qti.telephonyservice
+com.qualcomm.location
+com.qualcomm.qti.workloadclassifier
+com.qti.snapdragon.qdcm_ff
+com.qualcomm.wfd.service

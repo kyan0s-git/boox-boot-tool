@@ -44,6 +44,7 @@ class WriteToken:
     write_roundtrip_proven: bool = False
     backup_taken: bool = False
     golden_firmware_available: bool = False
+    dangerous_acknowledged: bool = False
     expert_unlocked: bool = False
 
     @property
@@ -70,6 +71,14 @@ class WriteToken:
     def authorize(self, tier: Tier, target: str) -> None:
         """Check the token carries enough authority for this blast radius."""
         self.check_usable()
+        if tier is Tier.DANGEROUS and not (self.dangerous_acknowledged or self.expert_unlocked):
+            raise SafetyError(
+                f"{target} is classified {tier.label} and has not been acknowledged",
+                remedy=(
+                    "Writing it can cost you a boot or a factory reset. The command that "
+                    "writes it must confirm this explicitly."
+                ),
+            )
         if tier is Tier.CATASTROPHIC and not self.expert_unlocked:
             raise SafetyError(
                 f"{target} is classified {tier.label} and the expert gate is not unlocked",

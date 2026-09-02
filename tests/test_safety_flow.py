@@ -347,3 +347,37 @@ def test_restore_refuses_a_different_device(device, tmp_path, profile):
     other = backup_mod.Backup.load(bk.root)
     with pytest.raises(SafetyError, match="not the device the backup came from"):
         backup_mod.restore(session, other, token, ["boot_a"], profile=profile)
+
+
+def test_dangerous_partition_needs_acknowledgement(device, tmp_path, profile):
+    """DANGEROUS sits between SAFE and the expert gate, as SAFETY.md describes."""
+    session, _, bk, token = full_setup(device, tmp_path, profile)
+    vbmeta = tmp_path / "vbmeta.img"
+    vbmeta.write_bytes(bk.image("vbmeta_a").read_bytes())
+    report = _report_for(session, bk, "vbmeta_a", vbmeta.read_bytes(), require_patch=False)
+
+    with pytest.raises(SafetyError, match="has not been acknowledged"):
+        session.write("vbmeta_a", vbmeta, token=token, report=report,
+                      backup=bk.image("vbmeta_a"))
+
+    token.dangerous_acknowledged = True
+    session.write("vbmeta_a", vbmeta, token=token, report=report, backup=bk.image("vbmeta_a"))
+
+
+def test_acknowledging_dangerous_does_not_unlock_catastrophic(device, tmp_path, profile):
+    session, _, bk, token = full_setup(device, tmp_path, profile)
+    token.dangerous_acknowledged = True
+    abl = tmp_path / "abl.img"
+    abl.write_bytes(device.partition_bytes("abl_a")[:8192])
+    report = _report_for(session, bk, "abl_a", abl.read_bytes(), require_patch=False)
+    with pytest.raises(SafetyError, match="expert gate is not unlocked"):
+        session.write("abl_a", abl, token=token, report=report, backup=bk.image("abl_a"))
+
+
+def test_safe_partition_needs_no_acknowledgement(device, tmp_path, profile):
+    session, _, bk, token = full_setup(device, tmp_path, profile)
+    assert not token.dangerous_acknowledged
+    patched = tmp_path / "p.img"
+    patched.write_bytes(PATCHED_BOOT)
+    report = _report_for(session, bk, "boot_a", PATCHED_BOOT)
+    session.write("boot_a", patched, token=token, report=report, backup=bk.image("boot_a"))
