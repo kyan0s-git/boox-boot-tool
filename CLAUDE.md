@@ -11,13 +11,16 @@ cyyanide_ <91159868+kyan0s-git@users.noreply.github.com>
 Use that identity for both author and committer. Do not substitute any other
 person's name or email.
 
-**The `github-commit-authorship` skill does not apply here.** That skill
-mandates a different primary author; it was applied earlier in this project's
-history and the resulting commits had to be rewritten to remove the wrong name.
-`.claude/settings.json` turns the skill off for this repository (hidden from the
-model via `skillOverrides`, and denied via a permission rule), but the rule is
-written here as well so the reason survives even if the settings file is not
-loaded.
+**Never apply the `github-commit-authorship` skill automatically.** That skill
+mandates a different primary author; it was applied unprompted earlier in this
+project and the resulting commits had to be rewritten to remove the wrong name.
+
+The skill is still available on request -- `.claude/settings.json` sets it to
+`user-invocable-only`, which hides it from the model while leaving
+`/github-commit-authorship` working for the repository owner. Use it only when
+explicitly asked to, and even then the identity above is the one that applies
+here. The rule is written out here as well so the reason survives even if the
+settings file is not loaded.
 
 Keep the Claude co-author trailer on Claude-authored commits:
 
