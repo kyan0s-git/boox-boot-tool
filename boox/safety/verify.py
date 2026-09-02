@@ -195,10 +195,14 @@ def _provenance(
             tried.append(f"{ref.label} (header fingerprint differs)")
             continue
 
-        ref_entries = set(ramdisk_mod.inspect(parsed.ramdisk).entries)
+        ref_info = ramdisk_mod.inspect(parsed.ramdisk)
+        ref_entries = set(ref_info.entries)
         cand_entries = set(ramdisk_mod.inspect(candidate.ramdisk).entries)
         if not ref_entries:
-            tried.append(f"{ref.label} (could not read the reference ramdisk)")
+            # Say *why* we could not read it. Without the codec name and the
+            # install command this failure is undiagnosable, and it blocks the
+            # main rooting path on any device whose init_boot uses lz4.
+            tried.append(f"{ref.label}: {ref_info.evidence}")
             continue
         overlap = len(ref_entries & cand_entries) / len(ref_entries)
         if overlap >= RAMDISK_OVERLAP_THRESHOLD:

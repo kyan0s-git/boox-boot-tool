@@ -13,6 +13,7 @@ so a backup that verifies is a backup that was actually transferred correctly.
 from __future__ import annotations
 
 import json
+import shutil
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -70,7 +71,20 @@ class Backup:
 
     @property
     def identity(self) -> DeviceIdentity:
-        return DeviceIdentity(**{k: v for k, v in (self.manifest.get("identity") or {}).items()})
+        """The device this backup came from.
+
+        Manifests are forward-compatible data, not a strict schema: a backup
+        written by a later version may carry fields this version has never heard
+        of. Splatting those straight into the dataclass raises TypeError, which
+        is not a BooxError, so the CLI would show a traceback -- and this is
+        reachable from 'boox rescue restore', i.e. while recovering.
+        """
+        raw = self.manifest.get("identity") or {}
+        known = set(DeviceIdentity.__dataclass_fields__)
+        unknown = sorted(set(raw) - known)
+        if unknown:
+            warn(f"backup manifest has fields this version does not know: {', '.join(unknown)}")
+        return DeviceIdentity(**{k: v for k, v in raw.items() if k in known})
 
     @property
     def profile_id(self) -> str | None:
@@ -181,8 +195,9 @@ def create(
         path, digest = session.read_twice(name)
         final = dest / f"{name}.img"
         if path.resolve() != final.resolve():
-            final.write_bytes(path.read_bytes())
-            path.unlink(missing_ok=True)
+            # Move, not read-then-write: a partition can be gigabytes, and
+            # nothing here needs its contents in memory.
+            shutil.move(str(path), str(final))
         entries[name] = {
             "file": final.name,
             "sha256": digest,

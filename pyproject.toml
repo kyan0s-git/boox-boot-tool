@@ -12,6 +12,11 @@ license = { text = "GPL-3.0-or-later" }
 dependencies = [
     "rich>=13.7",
     "questionary>=2.0",
+    # Ramdisk codecs. Not optional in practice: Android 13 init_boot ramdisks are
+    # normally lz4, and the verifier's provenance check for kernel-less images
+    # has to read inside the ramdisk to work at all.
+    "lz4>=4.3",
+    "zstandard>=0.22",
 ]
 
 [project.optional-dependencies]

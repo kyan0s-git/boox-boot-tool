@@ -200,3 +200,47 @@ def test_every_mutation_is_rejected(label, blob):
         blob, target="boot_a", table=TABLE, references=REFS, require_root_patch=True
     )
     assert not report.ok, f"{label} should not have verified:\n{report.render()}"
+
+
+# --- lz4 ramdisks: the normal format for Android 13 init_boot -----------------
+
+def _lz4_ramdisk(names):
+    lz4_frame = pytest.importorskip("lz4.frame")
+    from tests.support import make_cpio
+
+    return lz4_frame.compress(make_cpio(names))
+
+
+def test_lz4_init_boot_verifies():
+    """init_boot provenance reads inside the ramdisk, so the codec must work."""
+    stock = build_boot_image(b"", _lz4_ramdisk(STOCK_RAMDISK_ENTRIES),
+                             header_version=4, os_version_raw=0x1A2B3C)
+    patched = build_boot_image(b"", _lz4_ramdisk(MAGISK_RAMDISK_ENTRIES),
+                               header_version=4, os_version_raw=0x1A2B3C)
+    report = verify.verify_candidate(
+        patched, target="init_boot_a",
+        references=[verify.Reference("device backup init_boot_a", stock)],
+        require_root_patch=True,
+    )
+    assert report.ok, report.render()
+    assert check(report, "provenance").passed
+    assert check(report, "root_patch_present").passed
+
+
+def test_missing_codec_message_names_the_package(monkeypatch):
+    """If a codec is unavailable, say which package to install."""
+    from boox.imaging import ramdisk as ramdisk_mod
+
+    stock = build_boot_image(b"", _lz4_ramdisk(STOCK_RAMDISK_ENTRIES),
+                             header_version=4, os_version_raw=0x1A2B3C)
+    patched = build_boot_image(b"", _lz4_ramdisk(MAGISK_RAMDISK_ENTRIES),
+                               header_version=4, os_version_raw=0x1A2B3C)
+    monkeypatch.setattr(ramdisk_mod, "_try_lz4", lambda data, legacy=False: None)
+
+    report = verify.verify_candidate(
+        patched, target="init_boot_a",
+        references=[verify.Reference("device backup init_boot_a", stock)],
+    )
+    detail = check(report, "provenance").detail
+    assert not check(report, "provenance").passed
+    assert "lz4" in detail and "pip install lz4" in detail

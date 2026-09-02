@@ -6,6 +6,7 @@ the tool at the wrong image.
 """
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -380,3 +381,77 @@ def test_safe_partition_needs_no_acknowledgement(device, tmp_path, profile):
     patched.write_bytes(PATCHED_BOOT)
     report = _report_for(session, bk, "boot_a", PATCHED_BOOT)
     session.write("boot_a", patched, token=token, report=report, backup=bk.image("boot_a"))
+
+
+def test_rollback_failure_prints_a_command_that_actually_parses(tmp_path, profile):
+    """The command shown when a rollback fails must be runnable.
+
+    It is printed at the worst possible moment -- device in an unknown state,
+    user told not to reboot -- so a wrong subcommand or flag there is its own
+    kind of failure. Parse it with the real argument parser.
+    """
+    import shlex
+
+    from boox.cli import build_parser
+
+    device = MockBackend(tmp_path / "device")
+    device.add_partition("boot_a", STOCK_BOOT, size=len(STOCK_BOOT) + 65536)
+    device.add_partition("misc", b"\xa5" * 512, size=4096)
+    session, journal, bk, token = full_setup(device, tmp_path, profile)
+
+    device.faults.silent_corrupt = {"boot_a"}          # rollback cannot verify either
+    patched = tmp_path / "patched.img"
+    patched.write_bytes(PATCHED_BOOT)
+    report = _report_for(session, bk, "boot_a", PATCHED_BOOT)
+
+    with pytest.raises(SafetyError) as exc:
+        session.write("boot_a", patched, token=token, report=report,
+                      backup=bk.image("boot_a"))
+
+    command = next(
+        line.strip() for line in str(exc.value).splitlines() if line.strip().startswith("boox ")
+    )
+    args = build_parser().parse_args(shlex.split(command)[1:])
+    assert args.rescue_command == "restore"
+    assert args.partition == ["boot_a"]
+    # --backup takes the backup directory, not the image inside it.
+    assert Path(args.backup) == bk.root
+
+
+def test_advertised_recovery_commands_parse(profile):
+    """Every actionable command the tool prints in an error path must be valid."""
+    import shlex
+
+    from boox.cli import build_parser
+
+    advertised = [
+        "boox rescue diagnose",
+        "boox rescue playbook",
+        "boox rescue restore --partition boot_a",
+        "boox rescue restore --backup /tmp/b --partition boot_a --partition boot_b",
+        "boox doctor --preflight",
+        "boox backup",
+        "boox root prepare",
+        "boox root apply",
+        "boox firmware fetch",
+        "boox firmware keys --fetch",
+        "boox harden --ams-fix",
+        "boox harden --install-module /tmp/m.zip",
+        "boox debloat --restore com.onyx.dict",
+    ]
+    parser = build_parser()
+    for command in advertised:
+        parser.parse_args(shlex.split(command)[1:])   # raises SystemExit if invalid
+
+
+def test_manifest_with_unknown_fields_still_loads(device, tmp_path, profile):
+    """A backup from a later version must not blow up the restore path."""
+    session, _ = make_session(device, tmp_path)
+    bk = backup_mod.create(session, profile, tmp_path / "backup")
+    manifest = json.loads((bk.root / "manifest.json").read_text())
+    manifest["identity"]["chip_revision"] = "2.1"
+    (bk.root / "manifest.json").write_text(json.dumps(manifest))
+
+    reloaded = backup_mod.Backup.load(bk.root)
+    assert reloaded.identity.hwid == device.identity_value.hwid
+    session.require_same_device(reloaded.identity)

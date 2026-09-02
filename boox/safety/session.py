@@ -233,7 +233,7 @@ class DeviceSession:
                 f"{partition} was written but could not be read back: {exc}",
                 remedy=(
                     "Do NOT reboot the device. Re-run this command; if the read still "
-                    "fails, run 'boox rescue' while the device is still in EDL."
+                    "fails, run 'boox rescue diagnose' while it is still in EDL."
                 ),
             ) from exc
 
@@ -272,7 +272,7 @@ class DeviceSession:
             f"{partition} is in an unknown state and the rollback did not verify",
             remedy=(
                 f"Do NOT reboot. Keep the device in EDL and run:\n"
-                f"    boox rescue --partition {partition} --from {backup}"
+                f"    boox rescue restore --backup {backup.parent} --partition {partition}"
             ),
         )
 

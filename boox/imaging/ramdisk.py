@@ -37,6 +37,17 @@ MAGISK_MARKERS = (
 OTHER_ROOT_MARKERS = ("kernelsu", "apatch", "ksud")
 
 
+# What to install when a codec is missing. These are declared dependencies, so
+# hitting this means a broken environment rather than an optional extra -- but
+# the message still has to say which package, because "could not read the
+# reference ramdisk" is not something a user can act on.
+INSTALL_HINT = {
+    "lz4": "pip install lz4",
+    "lz4_legacy": "pip install lz4",
+    "zstd": "pip install zstandard",
+}
+
+
 class PatchState(str, Enum):
     PATCHED = "patched"
     NOT_PATCHED = "not_patched"
@@ -178,11 +189,16 @@ def inspect(ramdisk: bytes) -> RamdiskInfo:
 
     codec, plain = decompress(ramdisk)
     if plain is None:
-        return RamdiskInfo(
-            codec,
-            PatchState.UNKNOWN,
-            f"ramdisk is {codec}-compressed and this Python cannot decompress it",
+        hint = INSTALL_HINT.get(codec)
+        detail = (
+            f"ramdisk is {codec}-compressed and could not be decompressed"
+            if not hint
+            else (
+                f"ramdisk is {codec}-compressed and the codec is not installed "
+                f"-- run: {hint}"
+            )
         )
+        return RamdiskInfo(codec, PatchState.UNKNOWN, detail)
 
     entries = list_cpio_entries(plain)
     lowered = [e.lower() for e in entries]

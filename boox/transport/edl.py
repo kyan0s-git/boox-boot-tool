@@ -152,7 +152,7 @@ class EdlClientBackend(EdlBackend):
                 f"writing partition {name} failed:\n{result.tail()}",
                 remedy=(
                     "Do NOT reboot the device. Re-run the same write, and if it keeps "
-                    "failing use 'boox rescue' to restore this partition from backup."
+                    "failing run 'boox rescue diagnose' to restore this partition."
                 ),
             )
 
@@ -217,7 +217,10 @@ class TemblastBackend(EdlBackend):
         if not result.ok:
             raise EdlError(
                 f"writing partition {name} failed:\n{result.tail()}",
-                remedy="Do NOT reboot. Retry, then use 'boox rescue' if it keeps failing.",
+                remedy=(
+                    "Do NOT reboot. Retry, then run 'boox rescue diagnose' if it "
+                    "keeps failing."
+                ),
             )
 
     def erase_partition(self, name: str) -> None:
