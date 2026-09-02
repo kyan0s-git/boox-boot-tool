@@ -137,3 +137,75 @@ def build_gpt(entries: list[tuple[str, int, int]], sector_size: int = 512) -> by
     out += b"\x00" * ((entry_lba - 2) * sector_size)
     out += table
     return bytes(out)
+
+
+# --- protobuf / OTA payload builders -----------------------------------------
+
+def _varint(value: int) -> bytes:
+    out = bytearray()
+    while True:
+        byte = value & 0x7F
+        value >>= 7
+        out.append(byte | (0x80 if value else 0))
+        if not value:
+            return bytes(out)
+
+
+def pb_varint(number: int, value: int) -> bytes:
+    return _varint(number << 3 | 0) + _varint(value)
+
+
+def pb_bytes(number: int, value: bytes) -> bytes:
+    return _varint(number << 3 | 2) + _varint(len(value)) + value
+
+
+def _extent(start_block: int, num_blocks: int) -> bytes:
+    return pb_varint(1, start_block) + pb_varint(2, num_blocks)
+
+
+def build_payload(partitions: dict[str, tuple[bytes, str]], block_size: int = 4096) -> bytes:
+    """Build a synthetic full OTA payload.
+
+    ``partitions`` maps name -> (image bytes, op kind) where op kind is one of
+    "replace", "bz", "xz", "zero", or "delta" (to simulate an incremental OTA).
+    """
+    import bz2
+    import hashlib
+    import lzma
+    import struct
+
+    blobs = bytearray()
+    part_msgs = []
+
+    for name, (image, kind) in partitions.items():
+        padded = image + b"\x00" * ((-len(image)) % block_size)
+        num_blocks = len(padded) // block_size
+
+        if kind == "zero":
+            payload_data, op_type = b"", 6
+        elif kind == "bz":
+            payload_data, op_type = bz2.compress(padded), 1
+        elif kind == "xz":
+            payload_data, op_type = lzma.compress(padded), 8
+        elif kind == "delta":
+            payload_data, op_type = b"\x00" * 8, 3        # BSDIFF
+        else:
+            payload_data, op_type = padded, 0
+
+        offset = len(blobs)
+        blobs += payload_data
+
+        op = (
+            pb_varint(1, op_type)
+            + pb_varint(2, offset)
+            + pb_varint(3, len(payload_data))
+            + pb_bytes(6, _extent(0, num_blocks))
+        )
+        info = pb_varint(1, len(image)) + pb_bytes(2, hashlib.sha256(image).digest())
+        part_msgs.append(
+            pb_bytes(1, name.encode()) + pb_bytes(8, op) + pb_bytes(9, info)
+        )
+
+    manifest = pb_varint(3, block_size) + b"".join(pb_bytes(13, m) for m in part_msgs)
+    header = b"CrAU" + struct.pack(">QQ", 2, len(manifest)) + struct.pack(">I", 0)
+    return header + manifest + bytes(blobs)
