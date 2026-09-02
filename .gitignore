@@ -16,3 +16,6 @@ htmlcov/
 *.bin
 !tests/fixtures/**/*.img
 !tests/fixtures/**/*.bin
+
+# Personal Claude Code overrides (project settings.json IS committed)
+.claude/settings.local.json
