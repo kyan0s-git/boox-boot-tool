@@ -14,7 +14,6 @@ Only if all of that passes does preflight issue a :class:`WriteToken`.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from boox.console import info, step
 from boox.errors import PreflightError

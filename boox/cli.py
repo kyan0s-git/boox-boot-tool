@@ -17,7 +17,7 @@ from boox.ops import rescue as rescue_ops
 from boox.ops import root as root_ops
 from boox.ops import unlock as unlock_ops
 from boox.safety import preflight
-from boox.safety.backup import Backup, create as create_backup
+from boox.safety.backup import create as create_backup
 from boox.safety.verify import verify_candidate
 from boox.util import human_size, sha256_file, short
 

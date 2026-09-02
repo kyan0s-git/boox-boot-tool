@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from boox.console import banner, info, ok, step, warn
-from boox.errors import BooxError, SafetyError
+from boox.errors import BooxError
 from boox.ops.context import Context
 from boox.safety.backup import Backup
 from boox.safety.session import WriteToken
@@ -163,33 +163,34 @@ PLAYBOOK = """\
 Work down this list. Stop at the first tier that responds.
 
 T0  The device boots and adb works
-    Nothing here is urgent. Restore the partition you changed:
+    Not urgent. Restore the partition you changed:
         boox rescue restore --partition boot_a
 
 T1  No Android, but the device still enters EDL
-    This is fully recoverable and is the state the tool is designed around.
-      - From fastboot:   edl reset --resetmode=edl
-      - Or hold power + volume to force it off, then plug in while holding
-        the volume key the profile documents for your model.
-      - Confirm with:    boox doctor
-    Then:                boox rescue restore --partition <the one you wrote>
+    Fully recoverable. This is the state the tool is built around.
+      - From fastboot:  edl reset --resetmode=edl
+      - Or force it off with power + volume, then plug in while
+        holding the volume key your model documents.
+      - Confirm with:   boox doctor
+    Then: boox rescue restore --partition <the one you wrote>
 
 T2  Nothing over a normal USB cable
-    Use an EDL ("deep flash") cable, which shorts D+ to force the boot ROM into
-    9008 regardless of what the software is doing. These are inexpensive and are
-    worth owning before you start, not after.
+    Use an EDL ("deep flash") cable. It shorts D+ to force the boot
+    ROM into 9008 whatever the software is doing. They are cheap,
+    and are worth owning before you start rather than after.
 
 T3  Still nothing
-    The last resort is shorting the EDL test points on the mainboard, which
-    means opening the device. Look up the point locations for your model first;
-    guessing at them can do permanent damage. If you are not comfortable
-    opening it, a repair shop with a Qualcomm flashing rig can do this.
+    Last resort is shorting the EDL test points on the mainboard,
+    which means opening the device. Look up the locations for your
+    model first -- guessing can do permanent damage. If you are not
+    comfortable opening it, a repair shop with a Qualcomm flashing
+    rig can do this.
 
-A path that does not require any of the above:
-    Onyx's own recovery can reinstall firmware from a microSD card, which this
-    model has a slot for. If the device still reaches recovery, put the official
-    update.upx on a card and use it. That loses root and possibly your data, but
-    it does not require any cables or tools."""
+A path needing none of the above:
+    Onyx's recovery can reinstall firmware from a microSD card, and
+    this model has a slot. If the device still reaches recovery, put
+    the official update.upx on a card and use it. That costs you
+    root and possibly your data, but needs no cables or tools."""
 
 
 def print_playbook() -> None:

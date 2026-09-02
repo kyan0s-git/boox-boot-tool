@@ -68,6 +68,8 @@ class Context:
     adb_serial: str | None = None
     loader: Path | None = None
     backend_name: str = "edlclient"
+    # How long to wait after asking the device to enter EDL before talking to it.
+    edl_settle_seconds: float = 5.0
     _adb: Adb | None = field(default=None, repr=False)
     _session: DeviceSession | None = field(default=None, repr=False)
     _backend: EdlBackend | None = field(default=None, repr=False)
@@ -143,7 +145,8 @@ class Context:
             return
         self.adb.reboot_edl()
         self._props = None
-        time.sleep(5)
+        if self.edl_settle_seconds:
+            time.sleep(self.edl_settle_seconds)
 
     # ---- artefacts ------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 """Declarative per-device knowledge."""
 
-from boox.profiles.schema import (  # noqa: F401
+from boox.profiles.schema import (
     LoaderCandidate,
     Profile,
     available,
@@ -9,3 +9,13 @@ from boox.profiles.schema import (  # noqa: F401
     load_file,
     match_adb_model,
 )
+
+__all__ = [
+    "LoaderCandidate",
+    "Profile",
+    "available",
+    "load",
+    "load_all",
+    "load_file",
+    "match_adb_model",
+]

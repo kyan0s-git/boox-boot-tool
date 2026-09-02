@@ -164,12 +164,15 @@ def prepare(
 
     banner(
         "Now patch the image on the tablet",
-        f"1. Open Magisk on the device (install it from github.com/topjohnwu/Magisk if needed)\n"
+        f"1. Open Magisk on the device. Install it from\n"
+        f"   github.com/topjohnwu/Magisk first if you have not.\n"
         f"2. Install -> Select and Patch a File\n"
-        f"3. Choose:  {device_path}\n"
-        f"4. Let it finish, then run:  boox root apply\n\n"
-        f"Patch only this one file. Do not patch anything from another device or slot --\n"
-        f"the verifier will reject it, but it is easier not to make the mistake.",
+        f"3. Choose:\n"
+        f"     {device_path}\n"
+        f"4. When it finishes, run:  boox root apply\n\n"
+        f"Patch only this one file. An image from another device or\n"
+        f"slot will be rejected, but it is easier not to make the\n"
+        f"mistake in the first place.",
         style="step",
     )
     return plan
@@ -328,9 +331,9 @@ def apply(
     ]
     if ctx.profile.quirks.get("magisk_splash_hang"):
         notes.append(
-            "\nOn this model the Magisk app is expected to hang on its splash screen -- "
-            "root itself works. Run 'boox harden --ams-fix' to build the services.jar "
-            "module that fixes the app."
+            "\nOn this model the Magisk app is expected to hang on its\n"
+            "splash screen. Root itself works. Run 'boox harden --ams-fix'\n"
+            "to build the services.jar module that fixes the app."
         )
     banner("Rooted", "\n".join(notes), style="ok")
 

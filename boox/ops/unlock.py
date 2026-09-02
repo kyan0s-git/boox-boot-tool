@@ -26,7 +26,6 @@ from boox.errors import SafetyError
 from boox.imaging import bootimg
 from boox.ops.context import Context
 from boox.safety import preflight
-from boox.safety.backup import Backup
 from boox.safety.tiers import Tier, classify
 from boox.safety.verify import Reference, verify_candidate
 from boox.util import human_size, sha256_file, short
@@ -36,18 +35,20 @@ CONFIRM_PHRASE = "REPLACE MY BOOTLOADER"
 WARNING = """\
 This writes a bootloader that did not come from your device.
 
-  - It cannot be verified against anything. The provenance check will fail, and
-    you will be asked to acknowledge that specific failure by name.
-  - If the ABL is wrong for this SoC, the device will not reach fastboot or
-    recovery. EDL is the only way back, and you may need an EDL cable or the
-    mainboard test points to get there.
+  - It cannot be verified against anything. The provenance check
+    will fail, and you will acknowledge that failure by name.
+  - If the ABL is wrong for this SoC, the device will not reach
+    fastboot or recovery. EDL is the only way back, and you may
+    need an EDL cable or the mainboard test points to get there.
   - Erasing devinfo resets device state. Expect a factory reset.
-  - None of this is needed for root, Magisk, debloating, or firewalling. If that
-    is what you are here for, stop and run 'boox root' instead.
+  - None of this is needed for root, Magisk, debloating or
+    firewalling. If that is why you are here, stop and run
+    'boox root' instead.
 
-Before continuing this command requires, and checks:
-  - a verified backup taken in this session that includes abl_a and abl_b
-  - decrypted stock firmware present as a second restore source
+This command requires, and checks:
+  - a verified backup from this session covering every partition
+    it writes
+  - decrypted stock firmware, as a second restore source
   - a full preflight pass, including the write round-trip
   - the exact confirmation phrase, typed"""
 

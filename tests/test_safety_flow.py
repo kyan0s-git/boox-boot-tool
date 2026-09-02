@@ -15,7 +15,6 @@ from boox.safety import backup as backup_mod
 from boox.safety import preflight, verify
 from boox.safety.journal import Journal
 from boox.safety.session import DeviceSession, WriteToken
-from boox.safety.tiers import Tier
 from boox.transport.mock import FaultConfig, MockBackend
 from tests.support import (
     MAGISK_RAMDISK_ENTRIES,
